@@ -99,8 +99,8 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         if "=" in arg:
             key, value = arg.split("=")
-                if key == "rel":
-                    rel_dir = value
+            if key == "rel":
+                rel_dir = value
         else:
             folders.append(arg)
 
