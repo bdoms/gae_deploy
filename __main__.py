@@ -6,8 +6,9 @@ import time
 from jsmin import jsmin
 from cssmin import cssmin
 
-from . import STATIC_MAP, STATIC_FILE
+from __init__ import STATIC_MAP, STATIC_FILE
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTENSIONS = [".js", ".css"]
 
 
@@ -79,8 +80,7 @@ def minify(folders, relative_dir=""):
 
     # generate a file with a dictionary of all the original file names to their new minified counterparts
     # make a timestamp for properly caching static assets we can't find here (images, etc.)
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    f = open(os.path.join(current_dur, STATIC_FILE), "w")
+    f = open(os.path.join(CURRENT_DIR, STATIC_FILE), "w")
     f.write("TIMESTAMP = '" + str(int(time.time())) + "'\n")
     f.write("STATIC_MAP = {\n")
     last = len(new_static_map) - 1
