@@ -19,14 +19,16 @@ If you have a single directory with all your static or public assets, this becom
 python gae_deploy public
 ```
 
-There is a single command line option, `rel`, which is to specify a folder that the built URLs should be relative to.
+There is a single command line option, `rel`, which is to specify a folder or folders that the built URLs should be relative to.
+If a single relative folder is supplied then it is used for all directories.
+Otherwise a comma separated list must match the length of the supplied folders so they can be matched up.
 For example, if you ran this command:
 
 ```bash
-python gae_deploy rel=public public/css public/js
+python gae_deploy rel=public,static public/css static/js
 ```
 
-Then the URL for anything in the `css` or `js` directories would not have `public` in it. The file `public/js/main.js`
+Then the URL for anything in the `css` or `js` directories would not have `public` or `static` in it, respectively. The file `static/js/main.js`
 would be referenced as `/js/main.js`.
 
 ## Cache-Busting

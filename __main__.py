@@ -12,13 +12,17 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTENSIONS = [".js", ".css"]
 
 
-def minify(folders, relative_dir=""):
+def minify(folders, relative_dirs=None):
     # relative dir is what folder the files are relative to for the purpose of turning them into URLs
     new_static_map = {}
     cwd = os.getcwd()
-    relative_path = os.path.join(cwd, relative_dir)
 
-    for folder in folders:
+    if not relative_dirs:
+        relative_dirs = [""] * len(folders)
+
+    for i, folder in enumerate(folders):
+        relative_path = os.path.join(cwd, relative_dirs[i])
+
         path = folder
         if not os.path.isabs(folder):
             path = os.path.join(cwd, folder)
@@ -39,10 +43,10 @@ def minify(folders, relative_dir=""):
                     # inspect filename to see if this could have been minified by other sources
                     # for now, this means if there are any numbers or "min" in the filename
                     digits = [char for char in fname if char.isdigit()]
-                    if digits or "min" in fname:
+                    if digits or ".min" in fname or "-min" in fname:
                         continue
 
-                    # fine the last modified date
+                    # find the last modified date
                     filename = os.path.join(root, name)
                     last_modified = int(os.path.getmtime(filename))
 
@@ -97,11 +101,15 @@ if __name__ == "__main__":
     # parse command line arguments
     folders = []
     rel_dir = ""
+    rel_dirs = None
     for arg in sys.argv[1:]:
         if "=" in arg:
             key, value = arg.split("=")
             if key == "rel":
-                rel_dir = value
+                if "," in value:
+                    rel_dirs = value.split(",")
+                else:
+                    rel_dir = value
         else:
             folders.append(arg)
 
@@ -109,10 +117,18 @@ if __name__ == "__main__":
         print "You must supply at least one folder to look in as an argument."
         sys.exit()
 
+    if not rel_dirs:
+        if rel_dir:
+            rel_dirs = [rel_dir] * len(folders)
+
+    elif len(rel_dirs) != len(folders):
+        print "Number of relative directories must match the number of folders."
+        sys.exit()
+
     # run the minifier
-    minify(folders, relative_dir=rel_dir)
+    minify(folders, relative_dirs=rel_dirs)
 
     # now do the actual deploy to the servers
-    from subprocess import call
-    call(["appcfg.py", "update", "."])
+    #from subprocess import call
+    #call(["appcfg.py", "update", "."])
 
