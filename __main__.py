@@ -12,7 +12,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTENSIONS = [".js", ".css"]
 
 
-def minify(folders, relative_dirs=None):
+def minify(folders, relative_dirs=None, prefixes=None):
     # relative dir is what folder the files are relative to for the purpose of turning them into URLs
     new_static_map = {}
     cwd = os.getcwd()
@@ -20,8 +20,12 @@ def minify(folders, relative_dirs=None):
     if not relative_dirs:
         relative_dirs = [""] * len(folders)
 
+    if not prefixes:
+        prefixes = [""] * len(folders)
+
     for i, folder in enumerate(folders):
         relative_path = os.path.join(cwd, relative_dirs[i])
+        prefix = prefixes[i]
 
         path = folder
         if not os.path.isabs(folder):
@@ -55,8 +59,8 @@ def minify(folders, relative_dirs=None):
                     min_filename = os.path.join(root, min_name)
 
                     # get relative filenames for use in URLs
-                    rel_filename = "/" + os.path.relpath(filename, relative_path).replace(os.sep, "/")
-                    rel_min_filename = "/" + os.path.relpath(min_filename, relative_path).replace(os.sep, "/")
+                    rel_filename = prefix + "/" + os.path.relpath(filename, relative_path).replace(os.sep, "/")
+                    rel_min_filename = prefix + "/" + os.path.relpath(min_filename, relative_path).replace(os.sep, "/")
 
                     if not os.path.exists(min_filename):
                         f = open(filename)
@@ -102,6 +106,8 @@ if __name__ == "__main__":
     folders = []
     rel_dir = ""
     rel_dirs = None
+    prefix = ""
+    prefixes = None
     for arg in sys.argv[1:]:
         if "=" in arg:
             key, value = arg.split("=")
@@ -110,6 +116,11 @@ if __name__ == "__main__":
                     rel_dirs = value.split(",")
                 else:
                     rel_dir = value
+            elif key == "prefix":
+                if "," in value:
+                    prefixes = value.split(",")
+                else:
+                    prefix = value
         else:
             folders.append(arg)
 
@@ -125,10 +136,18 @@ if __name__ == "__main__":
         print "Number of relative directories must match the number of folders."
         sys.exit()
 
+    if not prefixes:
+        if prefix:
+            prefixes = [prefix] * len(folders)
+
+    elif len(prefixes) != len(folders):
+        print "Number of prefixes must match the number of folders."
+        sys.exit()
+
+
     # run the minifier
-    minify(folders, relative_dirs=rel_dirs)
+    minify(folders, relative_dirs=rel_dirs, prefixes=prefixes)
 
     # now do the actual deploy to the servers
-    #from subprocess import call
-    #call(["appcfg.py", "update", "."])
-
+    from subprocess import call
+    call(["appcfg.py", "update", "."])
