@@ -9,45 +9,52 @@ GAE Deploy is a project to minify CSS and JavaScript before deploying, as well a
 Typical usage to minify CSS and JS files and then run the deployment command looks like this:
 
 ```bash
-python gae_deploy css_directory js_directory
+python gae_deploy gae=/path/to/gae config=gae_deploy.yaml
 ```
 
-The command line arguments are just a list of directories (relative or absolute) which contain CSS and/or JS files.
-For example, you have a single directory with all your static or public assets, called `public`, the command would be:
+### Command Line Arguments
 
-```bash
-python gae_deploy public
-```
+#### GAE Path
 
-### Options
+The `gae` command line argument is a path to where the Google App Engine SDK is on your system.
+It is required if yaml is not installed, so that gae_deploy can use the yaml library included with GAE.
+However if yaml is installed on your system and accessible to Python, then this argument can safely be ommitted.
+
+#### YAML Configuration File
+
+The `config` argument is a path to a yaml file that contains configuration imformation about the assets you want gae_deploy to minimize and keep track of. It is required.
+
+### Configuration
+
+The main part of the configuration file is a list of `static_dirs`, each containing a required `path` attribute that specifies where to find the directory.
+
+There is an example provided, `gae_deploy.yaml`, which you can use to get started by copying and pasting into your application directory and then modifying to suit your needs.
 
 #### Relative Paths
-The first command line option, `rel`, is to specify a folder or folders that the built URLs should be relative to.
-If a single relative folder is supplied then it is used for all directories.
-Otherwise a comma separated list must equal the length of the supplied folders so they can be matched up.
-For example, if you ran this command:
 
-```bash
-python gae_deploy rel=public,static public/css static/js
+The `rel` attribute is an optional attribute to specify for a folder what the built URLs should be relative to.
+For example, if you included this:
+
+```yaml
+- path: public/css
+  rel: public
 ```
-Then the URL for anything in the `css` or `js` directories would not have `public` or `static` in it, respectively. The file `static/js/main.js`
-would be referenced as `/js/main.js`.
+Then the URL for any assets in the `css` directory would not have `public` in it. The file `public/css/main.css`
+would be referenced as `/css/main.css`.
 This effectively strips away unwanted filesystem paths.
 
 #### URL Prefixes
 
-The second command line option, `prefix`, is to specify a prefix or prefixes for the built URLs.
+The `prefix` attribute is an optional attribute to specify a path to prefix the built URLs with.
 This is very useful for setting up custom URL routing for your assets that does not have to depend on the structure of your files and folders.
-This command works the same way as the first, where if a single prefix is supplied then it is used for all directories.
-Otherwise a comma separated list must equal the length of the supplied folders so they can be matched up.
-For example, if you ran this command:
+For example, if you included this:
 
-```bash
-python gae_deploy rel=public,static prefix=/cdn1,/cdn2 public/css static/js
+```yaml
+- path: public/css
+  rel: public
+  prefix: cdn
 ```
-Then the URL for a file at `public/css/main.css` would be `/cdn1/css/main.css`, and likewise
-the URL for a file at `static/js/main.js` would be `/cdn2/js/main.js`.
-
+Then the URL for a file at `public/css/main.css` would be `/cdn/css/main.css`.
 
 ## Cache-Busting
 

@@ -12,24 +12,18 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTENSIONS = [".js", ".css"]
 
 
-def minify(folders, relative_dirs=None, prefixes=None):
+def minify(folders):
     # relative dir is what folder the files are relative to for the purpose of turning them into URLs
     new_static_map = {}
     cwd = os.getcwd()
 
-    if not relative_dirs:
-        relative_dirs = [""] * len(folders)
+    for folder in folders:
+        relative_path = os.path.join(cwd, folder.get("rel", ""))
+        prefix = folder.get("prefix", "")
 
-    if not prefixes:
-        prefixes = [""] * len(folders)
-
-    for i, folder in enumerate(folders):
-        relative_path = os.path.join(cwd, relative_dirs[i])
-        prefix = prefixes[i]
-
-        path = folder
-        if not os.path.isabs(folder):
-            path = os.path.join(cwd, folder)
+        path = folder["path"]
+        if not os.path.isabs(path):
+            path = os.path.join(cwd, path)
 
         avoid = []
         for root, dirs, files in os.walk(path):
@@ -103,50 +97,36 @@ def minify(folders, relative_dirs=None, prefixes=None):
 
 if __name__ == "__main__":
     # parse command line arguments
-    folders = []
-    rel_dir = ""
-    rel_dirs = None
-    prefix = ""
-    prefixes = None
+    config = None
     for arg in sys.argv[1:]:
         if "=" in arg:
             key, value = arg.split("=")
-            if key == "rel":
-                if "," in value:
-                    rel_dirs = value.split(",")
-                else:
-                    rel_dir = value
-            elif key == "prefix":
-                if "," in value:
-                    prefixes = value.split(",")
-                else:
-                    prefix = value
-        else:
-            folders.append(arg)
+            if key == "gae":
+                yaml_dir = os.path.join(value, 'lib', 'yaml-3.10')
+                sys.path.append(yaml_dir)
+            elif key == "config":
+                config = value
 
-    if not folders:
+    try:
+        import yaml
+    except ImportError:
+        print "Could not import YAML. Make sure it is either installed or the supplied path to GAE is correct."
+        sys.exit()
+
+    if not config:
+        print "You must supply a configuration file."
+        sys.exit()
+
+    f = open(config, "r")
+    data = yaml.load(f)
+    f.close()
+
+    if "static_dirs" not in data or len(data["static_dirs"]) < 1:
         print "You must supply at least one folder to look in as an argument."
         sys.exit()
 
-    if not rel_dirs:
-        if rel_dir:
-            rel_dirs = [rel_dir] * len(folders)
-
-    elif len(rel_dirs) != len(folders):
-        print "Number of relative directories must match the number of folders."
-        sys.exit()
-
-    if not prefixes:
-        if prefix:
-            prefixes = [prefix] * len(folders)
-
-    elif len(prefixes) != len(folders):
-        print "Number of prefixes must match the number of folders."
-        sys.exit()
-
-
     # run the minifier
-    minify(folders, relative_dirs=rel_dirs, prefixes=prefixes)
+    minify(data["static_dirs"])
 
     # now do the actual deploy to the servers
     from subprocess import call
