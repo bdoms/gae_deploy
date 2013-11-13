@@ -5,3 +5,7 @@ static_dirs:
 - path: static/js
   rel: static
   prefix: cdn2
+
+symbolic_paths:
+- path: dev.js
+  link: production.js

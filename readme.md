@@ -56,6 +56,20 @@ For example, if you included this:
 ```
 Then the URL for a file at `public/css/main.css` would be `/cdn/css/main.css`.
 
+#### Symbolic Paths
+
+The `symbolic_paths` option is a way of routing one generated URL onto another.
+This allows for having multiple different references to the same file. For example, with this configuration:
+
+```yaml
+symbolic_paths:
+- path: local/css/development.css
+  link: cdn/css/production.css
+```
+
+The file `development.css` could still be referenced in templates like `${static('local/css/development.css')}`
+but the final output would be `cdn/css/production.css`.
+
 ## Cache-Busting
 
 To get at the ability to cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:

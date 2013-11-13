@@ -12,10 +12,16 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTENSIONS = [".js", ".css"]
 
 
-def minify(folders):
+def minify(folders, symbolic=None):
     # relative dir is what folder the files are relative to for the purpose of turning them into URLs
     new_static_map = {}
+    new_symbolic_map = {}
     cwd = os.getcwd()
+
+    symbolic_paths = {}
+    if symbolic:
+        for symbol in symbolic:
+            symbolic_paths[symbol["path"]] = symbol["link"]
 
     for folder in folders:
         relative_path = os.path.join(cwd, folder.get("rel", ""))
@@ -36,8 +42,16 @@ def minify(folders):
 
             for name in files:
                 fname, ext = os.path.splitext(name)
+
+                filename = os.path.join(root, name)
+                rel_filename = prefix + "/" + os.path.relpath(filename, relative_path).replace(os.sep, "/")
+
+                if rel_filename in symbolic_paths:
+                    new_symbolic_map[rel_filename] = symbolic_paths[rel_filename]
+                    continue
+
                 # look for files with .js or .css extensions
-                if ext in EXTENSIONS:
+                elif ext in EXTENSIONS:
                     # inspect filename to see if this could have been minified by other sources
                     # for now, this means if there are any numbers or "min" in the filename
                     digits = [char for char in fname if char.isdigit()]
@@ -45,7 +59,6 @@ def minify(folders):
                         continue
 
                     # find the last modified date
-                    filename = os.path.join(root, name)
                     last_modified = int(os.path.getmtime(filename))
 
                     # add .min so it can easily be added to a gitignore file (*.min.js and *.min.css)
@@ -53,7 +66,6 @@ def minify(folders):
                     min_filename = os.path.join(root, min_name)
 
                     # get relative filenames for use in URLs
-                    rel_filename = prefix + "/" + os.path.relpath(filename, relative_path).replace(os.sep, "/")
                     rel_min_filename = prefix + "/" + os.path.relpath(min_filename, relative_path).replace(os.sep, "/")
 
                     if not os.path.exists(min_filename):
@@ -91,7 +103,16 @@ def minify(folders):
         if i != last:
             f.write(",")
         f.write("\n")
-    f.write("}")
+    f.write("}\n")
+    f.write("SYMBOLIC_MAP = {\n")
+    if new_symbolic_map:
+        last = len(new_symbolic_map) - 1
+        for i, key in enumerate(new_symbolic_map):
+            f.write("'" + key + "': '" + new_symbolic_map[key] + "'")
+            if i != last:
+                f.write(",")
+            f.write("\n")
+    f.write("}\n")
     f.close()
 
 
@@ -126,7 +147,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # run the minifier
-    minify(data["static_dirs"])
+    minify(data["static_dirs"], symbolic=data.get("symbolic_paths", []))
 
     # now do the actual deploy to the servers
     from subprocess import call
