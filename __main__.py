@@ -3,8 +3,6 @@ import os
 import sys
 import time
 
-from jsmin import jsmin
-
 from __init__ import STATIC_MAP, STATIC_FILE
 
 # add library folders to enable imports from there
@@ -13,6 +11,10 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 CSSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "css", "src")
 sys.path.append(CSSMIN_DIR)
 from cssmin import cssmin
+
+JSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "jsmin")
+sys.path.append(JSMIN_DIR)
+from jsmin import jsmin
 
 
 def minify(folders, symbolic=None):
