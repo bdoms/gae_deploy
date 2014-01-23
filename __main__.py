@@ -1,4 +1,4 @@
-
+import argparse
 import os
 import sys
 import time
@@ -118,15 +118,14 @@ def minify(folders, symbolic=None):
 
 if __name__ == "__main__":
     # parse command line arguments
-    config = None
-    for arg in sys.argv[1:]:
-        if "=" in arg:
-            key, value = arg.split("=")
-            if key == "gae":
-                yaml_dir = os.path.join(value, 'lib', 'yaml-3.10')
-                sys.path.append(yaml_dir)
-            elif key == "config":
-                config = value
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=file, help="path to YAML configuration file")
+    parser.add_argument("--gae", metavar="dir", help="path to Google App Engine SDK directory")
+    args = parser.parse_args()
+
+    if args.gae:
+        yaml_dir = os.path.join(args.gae, 'lib', 'yaml-3.10')
+        sys.path.append(yaml_dir)
 
     try:
         import yaml
@@ -134,13 +133,8 @@ if __name__ == "__main__":
         print "Could not import YAML. Make sure it is either installed or the supplied path to GAE is correct."
         sys.exit()
 
-    if not config:
-        print "You must supply a configuration file."
-        sys.exit()
-
-    f = open(config, "r")
-    data = yaml.load(f)
-    f.close()
+    data = yaml.load(args.config)
+    args.config.close()
 
     if "static_dirs" not in data or len(data["static_dirs"]) < 1:
         print "You must supply at least one folder to look in as an argument."

@@ -9,10 +9,14 @@ GAE Deploy is a project to minify CSS and JavaScript before deploying, as well a
 Typical usage to minify CSS and JS files and then run the deployment command looks like this:
 
 ```bash
-python gae_deploy gae=/path/to/gae config=gae_deploy.yaml
+python gae_deploy deploy.yaml --gae /path/to/gae
 ```
 
 ### Command Line Arguments
+
+#### YAML Configuration File
+
+The first argument is a path to a YAML file that contains configuration information about the assets you want gae_deploy to minimize and keep track of. It is required.
 
 #### GAE Path
 
@@ -20,15 +24,11 @@ The `gae` command line argument is a path to where the Google App Engine SDK is 
 It is required if yaml is not installed, so that gae_deploy can use the yaml library included with GAE.
 However if yaml is installed on your system and accessible to Python, then this argument can safely be ommitted.
 
-#### YAML Configuration File
-
-The `config` argument is a path to a yaml file that contains configuration imformation about the assets you want gae_deploy to minimize and keep track of. It is required.
-
 ### Configuration
 
 The main part of the configuration file is a list of `static_dirs`, each containing a required `path` attribute that specifies where to find the directory.
 
-There is an example provided, `gae_deploy.yaml`, which you can use to get started by copying and pasting into your application directory and then modifying to suit your needs.
+There is an example provided, `deploy.yaml`, which you can use to get started by copying and pasting into your application directory and then modifying to suit your needs.
 
 #### Relative Paths
 
