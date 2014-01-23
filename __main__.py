@@ -4,16 +4,19 @@ import sys
 import time
 
 from jsmin import jsmin
-from cssmin import cssmin
 
 from __init__ import STATIC_MAP, STATIC_FILE
 
+# add library folders to enable imports from there
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-EXTENSIONS = [".js", ".css"]
+
+CSSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "css", "src")
+sys.path.append(CSSMIN_DIR)
+from cssmin import cssmin
 
 
 def minify(folders, symbolic=None):
-    # relative dir is what folder the files are relative to for the purpose of turning them into URLs
+    extensions = [".js", ".css"]
     new_static_map = {}
     new_symbolic_map = {}
     cwd = os.getcwd()
@@ -51,7 +54,7 @@ def minify(folders, symbolic=None):
                     continue
 
                 # look for files with .js or .css extensions
-                elif ext in EXTENSIONS:
+                elif ext in extensions:
                     # inspect filename to see if this could have been minified by other sources
                     # for now, this means if there are any numbers or "min" in the filename
                     digits = [char for char in fname if char.isdigit()]
