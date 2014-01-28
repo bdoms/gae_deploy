@@ -1,3 +1,25 @@
+branches:
+  default: master
+  files:
+  - input: robots.template.txt
+    output: robots.txt
+  variables:
+    master:
+      _version: 1
+      robots: 'Allow: /'
+    staging:
+      _version: _branch
+      robots: 'Disallow: /'
+
+branch_lists:
+  production:
+  - staging
+  - master
+  hotfix:
+  - master
+  - staging
+  - feature
+
 static_dirs:
 - path: public/css
   rel: public

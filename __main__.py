@@ -1,14 +1,17 @@
 import argparse
 import os
+import re
 import sys
 import time
+from subprocess import call
 
 from __init__ import STATIC_MAP, STATIC_FILE
+import git
 
 # add library folders to enable imports from there
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CSSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "css", "src")
+CSSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "cssmin", "src")
 sys.path.append(CSSMIN_DIR)
 from cssmin import cssmin
 
@@ -121,11 +124,95 @@ def minify(folders, symbolic=None):
     f.close()
 
 
+def writeFileFromTemplate(infile, outfile, variables, branch):
+    f = open(infile, "r")
+    content = f.read()
+    f.close()
+
+    matches = re.findall("\$\{(.*?)\}", content)
+    for match in matches:
+        # this will generate a key error if the variable is undefined, which we want to happen
+        value = variables[match]
+        if value == "_branch":
+            # this is a special case where we replace it with the branch name
+            value = branch
+        # do a global replace for this
+        content = content.replace("${" + match + "}", value)
+
+    # actually write the file
+    f = open(outfile, "w")
+    f.write(content)
+    f.close()
+
+
+def writeFilesFromTemplates(branches_config, branch_vars, branch):
+    
+    if "files" in branches_config:
+        files = branches_config["files"]
+
+        for f in files:
+            writeFileFromTemplate(f["input"], f["output"], branch_vars, branch)
+
+
+def deploy(config, branch=None, templates_only=False):
+    
+    branch_vars = None
+    branches_config = config.get("branches", None)
+    if branch and branches_config and "variables" in branches_config:
+        variables = branches_config["variables"]
+
+        branch_vars = variables.get(branch, None)
+        if not branch_vars:
+            default = branches_config.get("default", None)
+            if default and default in variables:
+                branch_vars = variables[default]
+
+        if not branch_vars:
+            raise Exception("Error: Could not find data for branch '%s' and no default was specified." % branch)
+
+        writeFilesFromTemplates(branches_config, branch_vars, branch)
+
+    if not templates_only:
+        # run the minifier if we need to
+        if "static_dirs" in config and len(config["static_dirs"]) > 0:
+            minify(config["static_dirs"], symbolic=config.get("symbolic_paths", []))
+
+        # see if a specific version is specified
+        version = None
+        if branch_vars and "_version" in branch_vars:
+            version = branch_vars["_version"]
+            if version == "_branch":
+                # this is a special case where we replace it with the branch name
+                version = branch
+
+        # finish with the actual deploy to the servers
+        update_args = ["appcfg.py", "update", "."]
+        if version:
+            update_args.append("--version=" + str(version))
+        call(update_args)
+
+
+def deployBranches(config, branches=None, templates_only=False):
+    if branches:
+        for branch in branches:
+            if git.currentBranch() != branch:
+                git.checkout(branch)
+            deploy(config, branch=branch)
+    elif git.installed() and git.isRepository():
+        deploy(config, branch=git.currentBranch(), templates_only=templates_only)
+    else:
+        deploy(config)
+
+
 if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=file, help="path to YAML configuration file")
-    parser.add_argument("--gae", metavar="dir", help="path to Google App Engine SDK directory")
+    parser.add_argument("-g", "--gae", metavar="dir", help="path to Google App Engine SDK directory")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-b", "--branch", metavar="branch", help="deploy a single git branch")
+    group.add_argument("-l", "--list", metavar="list", help="deploy a list of multiple git branches")
+    group.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
     args = parser.parse_args()
 
     if args.gae:
@@ -135,19 +222,20 @@ if __name__ == "__main__":
     try:
         import yaml
     except ImportError:
-        print "Could not import YAML. Make sure it is either installed or the supplied path to GAE is correct."
+        print "Error: Could not import YAML. Make sure it is either installed or the supplied path to GAE is correct."
         sys.exit()
 
     data = yaml.load(args.config)
     args.config.close()
 
-    if "static_dirs" not in data or len(data["static_dirs"]) < 1:
-        print "You must supply at least one folder to look in as an argument."
-        sys.exit()
+    branches = None
+    if args.branch:
+        branches = [args.branch]
+    elif args.list:
+        if "branch_lists" in data and args.list in data["branch_lists"]:
+            branches = data["branch_lists"][args.list]
+        else:
+            print "Error: Could not find definition for list '%s' in configuration." % args.list
+            sys.exit()
 
-    # run the minifier
-    minify(data["static_dirs"], symbolic=data.get("symbolic_paths", []))
-
-    # now do the actual deploy to the servers
-    from subprocess import call
-    call(["appcfg.py", "update", "."])
+    deployBranches(data, branches=branches, templates_only=args.templates)
