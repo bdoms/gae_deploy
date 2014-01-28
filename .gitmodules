@@ -1,10 +1,8 @@
-[submodule "lib/sh"]
-	path = lib/sh
-	url = https://github.com/amoffat/sh.git
-    ignore = dirty
 [submodule "lib/cssmin"]
 	path = lib/cssmin
 	url = https://github.com/zacharyvoase/cssmin.git
+    ignore = dirty
 [submodule "lib/jsmin"]
 	path = lib/jsmin
 	url = https://github.com/tikitu/jsmin.git
+    ignore = dirty
