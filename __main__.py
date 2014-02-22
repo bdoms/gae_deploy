@@ -154,7 +154,7 @@ def writeFilesFromTemplates(branches_config, branch_vars, branch):
             writeFileFromTemplate(f["input"], f["output"], branch_vars, branch)
 
 
-def deploy(config, branch=None, templates_only=False):
+def deploy(config, branch=None, templates_only=False, oauth2=False):
     
     branch_vars = None
     branches_config = config.get("branches", None)
@@ -189,19 +189,21 @@ def deploy(config, branch=None, templates_only=False):
         update_args = ["appcfg.py", "update", "."]
         if version:
             update_args.append("--version=" + str(version))
+        if oauth2:
+            update_args.append("--oauth2")
         call(update_args)
 
 
-def deployBranches(config, branches=None, templates_only=False):
+def deployBranches(config, branches=None, templates_only=False, oauth2=False):
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch)
+            deploy(config, branch=branch, oauth2=oauth2)
     elif git.installed() and git.isRepository():
-        deploy(config, branch=git.currentBranch(), templates_only=templates_only)
+        deploy(config, branch=git.currentBranch(), templates_only=templates_only, oauth2=oauth2)
     else:
-        deploy(config)
+        deploy(config, oauth2=oauth2)
 
 
 if __name__ == "__main__":
@@ -213,6 +215,7 @@ if __name__ == "__main__":
     group.add_argument("-b", "--branch", metavar="branch", help="deploy a single git branch")
     group.add_argument("-l", "--list", metavar="list", help="deploy a list of multiple git branches")
     group.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
+    parser.add_argument("--oauth2", action="store_true", help="send the oauth2 flag to appcfg")
     args = parser.parse_args()
 
     if args.gae:
@@ -238,4 +241,4 @@ if __name__ == "__main__":
             print "Error: Could not find definition for list '%s' in configuration." % args.list
             sys.exit()
 
-    deployBranches(data, branches=branches, templates_only=args.templates)
+    deployBranches(data, branches=branches, templates_only=args.templates, oauth2=args.oauth2)
