@@ -219,13 +219,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.gae:
-        yaml_dir = os.path.join(args.gae, 'lib', 'yaml-3.10')
-        sys.path.append(yaml_dir)
+        sys.path.append(args.gae)
+    
+    try:
+        import dev_appserver
+        dev_appserver.fix_sys_path()
+    except ImportError:
+        pass
 
     try:
         import yaml
     except ImportError:
-        print "Error: Could not import YAML. Make sure it is either installed or the supplied path to GAE is correct."
+        print "Error: Could not import YAML. Make sure it is installed, GAE is in the PYTHONPATH, or the supplied path is correct."
         sys.exit()
 
     data = yaml.load(args.config)
