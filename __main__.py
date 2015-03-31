@@ -94,7 +94,8 @@ def minify(folders, symbolic=None):
                             # it does, delete it
                             rel_old_min = STATIC_MAP[rel_filename]
                             full_path = os.path.join(relative_path, rel_old_min[1:]) # remove front slash
-                            if os.path.exists(full_path):
+                            # don't remove if this is the same file we just wrote
+                            if full_path != min_filename and os.path.exists(full_path):
                                 os.remove(full_path)
 
                     # add to the dict to record this, but first we need these to be relative
