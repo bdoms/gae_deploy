@@ -7,7 +7,7 @@ import time
 from subprocess import call
 
 from __init__ import STATIC_MAP, STATIC_FILE
-import git
+from lib import git
 from lib import trello
 
 # add library folders to enable imports from there
