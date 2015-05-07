@@ -6,3 +6,6 @@
 	path = lib/jsmin
 	url = https://github.com/tikitu/jsmin.git
     ignore = dirty
+[submodule "lib/trello"]
+	path = lib/trello
+	url = git@github.com:bdoms/trello.git

@@ -31,3 +31,12 @@ static_dirs:
 symbolic_paths:
 - path: dev.js
   link: production.js
+
+trello:
+  api_key: 'API_KEY'
+  oauth_token: 'OAUTH_TOKEN'
+  board_id: 'BOARD_ID'
+  list_id: 'LIST_ID'
+  release_name: '%Y-%m-%d Release'
+  branches:
+  - master

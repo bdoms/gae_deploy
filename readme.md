@@ -123,6 +123,29 @@ symbolic_paths:
 The file `development.css` could still be referenced in templates like `${static('local/css/development.css')}`
 but the final output would be `cdn/css/production.css`.
 
+#### Trello Integration
+
+If you include the Trello subsection then cards from a "Done" list will automatically be moved to a new release list.
+You can see how to get the required values in the readme of [the Trello submodule](https://github.com/bdoms/trello).
+
+Also note that the values are run through an `eval` statement, which allows you to store them elsewhere.
+This means you don't have to commit the `api_key` or `oauth_token` to code,
+or that you can have different ones on different machines. For example:
+
+```yaml
+trello:
+  api_key: os.environ['TRELLO_API_KEY']
+  oauth_token: os.environ['TRELLO_OAUTH_TOKEN']
+  board_id: 'normal_string'
+```
+
+The extra, optional parameters are:
+
+ * `release_name` - the name of the new card. Gets sent through `strftime` with the current local date and time
+so that they can be included in the name if desired.
+ * `branches` - a list of branches to act on when pushed. All other branches will be ignored.
+For example, this lets you move cards when master is pushed but not feature branches.
+
 ## Cache-Busting
 
 To get at the ability to cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:

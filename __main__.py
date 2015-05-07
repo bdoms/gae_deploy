@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 import re
 import sys
@@ -7,6 +8,7 @@ from subprocess import call
 
 from __init__ import STATIC_MAP, STATIC_FILE
 import git
+from lib import trello
 
 # add library folders to enable imports from there
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -195,16 +197,47 @@ def deploy(config, branch=None, templates_only=False, oauth2=False):
         call(update_args)
 
 
-def deployBranches(config, branches=None, templates_only=False, oauth2=False):
+def deployBranches(config, branches, templates_only=False, oauth2=False):
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch, oauth2=oauth2)
-    elif git.installed() and git.isRepository():
-        deploy(config, branch=git.currentBranch(), templates_only=templates_only, oauth2=oauth2)
+            deploy(config, branch=branch, templates_only=templates_only, oauth2=oauth2)
     else:
-        deploy(config, oauth2=oauth2)
+        deploy(config, templates_only=templates_only, oauth2=oauth2)
+
+
+def determineBranches(config, args):
+    branches = []
+    if args.branch:
+        branches = [args.branch]
+    elif args.list:
+        if "branch_lists" in config and args.list in config["branch_lists"]:
+            branches = config["branch_lists"][args.list]
+        else:
+            sys.exit("Error: Could not find definition for list '%s' in configuration." % args.list)
+    if not branches and git.installed() and git.isRepository():
+        branches = [git.currentBranch()]
+    return branches
+
+
+def notifyTrello(config, branches):
+    # allow for dynamic python expressions here so variables can be pulled from somewhere else
+    for key in config:
+        try:
+            config[key] = eval(config[key])
+        except:
+            pass
+    
+    for branch in branches:
+        # only talk to Trello if one of the specified branches is being pushed
+        # e.g. take action on master but not on a feature branch
+        if branch in config['branches']:
+            client = trello.Trello(config['api_key'], config['oauth_token'], config['board_id'])
+            now = datetime.datetime.now()
+            release_name = now.strftime(config['release_name'])
+            release_list = client.createList(release_name, config['list_id'])
+            client.moveCards(config['list_id'], release_list['id'])
 
 
 if __name__ == "__main__":
@@ -231,20 +264,14 @@ if __name__ == "__main__":
     try:
         import yaml
     except ImportError:
-        print "Error: Could not import YAML. Make sure it is installed, GAE is in the PYTHONPATH, or the supplied path is correct."
-        sys.exit()
+        sys.exit("Error: Could not import YAML. Make sure it is installed, GAE is in the PYTHONPATH, or the supplied path is correct.")
 
     data = yaml.load(args.config)
     args.config.close()
 
-    branches = None
-    if args.branch:
-        branches = [args.branch]
-    elif args.list:
-        if "branch_lists" in data and args.list in data["branch_lists"]:
-            branches = data["branch_lists"][args.list]
-        else:
-            print "Error: Could not find definition for list '%s' in configuration." % args.list
-            sys.exit()
+    branches = determineBranches(data, args)
 
-    deployBranches(data, branches=branches, templates_only=args.templates, oauth2=args.oauth2)
+    deployBranches(data, branches, templates_only=args.templates, oauth2=args.oauth2)
+
+    if 'trello' in data:
+        notifyTrello(data['trello'], branches)
