@@ -154,8 +154,8 @@ If you also included a Trello subsection then extra information about this relea
 
 To get a URL to use, setup [an incoming webhook](https://my.slack.com/services/new/incoming-webhook/).
 
-The `branches` argument works the same as the Trello integration
-- a notification will only be sent when a branch in this list is deployed.
+The `branches` argument works the same as the Trello integration:
+a notification will only be sent when a branch in this list is deployed.
 
 ## Cache-Busting
 
