@@ -146,6 +146,17 @@ so that they can be included in the name if desired.
  * `branches` - a list of branches to act on when pushed. All other branches will be ignored.
 For example, this lets you move cards when master is pushed but not feature branches.
 
+#### Slack Integration
+
+If you include a Slack subsection then a notification message will be sent to a Slack channel about this new deployment.
+
+If you also included a Trello subsection then extra information about this release will be pulled from Trello.
+
+To get a URL to use, setup [an incoming webhook](https://my.slack.com/services/new/incoming-webhook/).
+
+The `branches` argument works the same as the Trello integration
+- a notification will only be sent when a branch in this list is deployed.
+
 ## Cache-Busting
 
 To get at the ability to cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:

@@ -40,3 +40,8 @@ trello:
   release_name: '%Y-%m-%d Release'
   branches:
   - master
+
+slack:
+  url: 'https://hooks.slack.com/services/...'
+  branches:
+  - master

@@ -12,3 +12,6 @@
 [submodule "lib/git"]
 	path = lib/git
 	url = https://github.com/bdoms/git.git
+[submodule "lib/slack"]
+	path = lib/slack
+	url = https://github.com/bdoms/slack.git

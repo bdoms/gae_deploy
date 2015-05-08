@@ -7,8 +7,7 @@ import time
 from subprocess import call
 
 from __init__ import STATIC_MAP, STATIC_FILE
-from lib import git
-from lib import trello
+from lib import git, slack, trello
 
 # add library folders to enable imports from there
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -229,6 +228,7 @@ def notifyTrello(config, branches):
         except:
             pass
     
+    moved_cards = []
     for branch in branches:
         # only talk to Trello if one of the specified branches is being pushed
         # e.g. take action on master but not on a feature branch
@@ -237,7 +237,33 @@ def notifyTrello(config, branches):
             now = datetime.datetime.now()
             release_name = now.strftime(config['release_name'])
             release_list = client.createList(release_name, config['list_id'])
-            client.moveCards(config['list_id'], release_list['id'])
+            moved_cards = client.moveCards(config['list_id'], release_list['id'])
+
+    return moved_cards
+
+
+def notifySlack(config, branches, trello_cards=None):
+    for branch in branches:
+        # only talk to Slack if one of the specified branches is being pushed
+        # e.g. take action on master but not on a feature branch
+        if branch in config['branches']:
+            client = slack.Slack(config['url'])
+            username = git.currentUser()
+            text = 'New release deployed by ' + username
+            attachments = []
+            if trello_cards:
+                text += ':'
+                for card in trello_cards:
+                    fallback = '#' + str(card['idShort']) + ' - ' + card['name']
+                    card_text = '<' + card['url'] + '|#' + str(card['idShort']) + '> ' + card['name']
+                    attachment = {'fallback': fallback, 'text': card_text}
+                    # just pick the first label to color since Slack only supports one
+                    if 'labels' in card:
+                        for label in card['labels']:
+                            attachment['color'] = trello.COLORS.get(label['color'], '')
+                            break
+                    attachments.append(attachment)
+            client.postMessage(text, attachments=attachments)
 
 
 if __name__ == "__main__":
@@ -273,5 +299,9 @@ if __name__ == "__main__":
 
     deployBranches(data, branches, templates_only=args.templates, oauth2=args.oauth2)
 
+    cards = None
     if 'trello' in data:
-        notifyTrello(data['trello'], branches)
+        cards = notifyTrello(data['trello'], branches)
+
+    if 'slack' in data:
+        notifySlack(data['slack'], branches, trello_cards=cards)
