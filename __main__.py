@@ -156,7 +156,7 @@ def writeFilesFromTemplates(branches_config, branch_vars, branch):
             writeFileFromTemplate(f["input"], f["output"], branch_vars, branch)
 
 
-def deploy(config, branch=None, templates_only=False, oauth2=False):
+def deploy(config, branch=None, templates_only=False):
     
     branch_vars = None
     branches_config = config.get("branches", None)
@@ -191,19 +191,17 @@ def deploy(config, branch=None, templates_only=False, oauth2=False):
         update_args = ["appcfg.py", "update", "."]
         if version:
             update_args.append("--version=" + str(version))
-        if oauth2:
-            update_args.append("--oauth2")
         call(update_args)
 
 
-def deployBranches(config, branches, templates_only=False, oauth2=False):
+def deployBranches(config, branches, templates_only=False):
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch, templates_only=templates_only, oauth2=oauth2)
+            deploy(config, branch=branch, templates_only=templates_only)
     else:
-        deploy(config, templates_only=templates_only, oauth2=oauth2)
+        deploy(config, templates_only=templates_only)
 
 
 def determineBranches(config, args):
@@ -275,7 +273,6 @@ if __name__ == "__main__":
     group.add_argument("-b", "--branch", metavar="branch", help="deploy a single git branch")
     group.add_argument("-l", "--list", metavar="list", help="deploy a list of multiple git branches")
     group.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
-    parser.add_argument("--oauth2", action="store_true", help="send the oauth2 flag to appcfg")
     args = parser.parse_args()
 
     if args.gae:
@@ -297,7 +294,7 @@ if __name__ == "__main__":
 
     branches = determineBranches(data, args)
 
-    deployBranches(data, branches, templates_only=args.templates, oauth2=args.oauth2)
+    deployBranches(data, branches, templates_only=args.templates)
 
     cards = None
     if 'trello' in data:
