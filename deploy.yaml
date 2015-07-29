@@ -32,6 +32,10 @@ symbolic_paths:
 - path: dev.js
   link: production.js
 
+modules:
+- module1
+- module2
+
 trello:
   api_key: 'API_KEY'
   oauth_token: 'OAUTH_TOKEN'

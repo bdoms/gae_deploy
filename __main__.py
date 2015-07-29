@@ -156,7 +156,7 @@ def writeFilesFromTemplates(branches_config, branch_vars, branch):
             writeFileFromTemplate(f["input"], f["output"], branch_vars, branch)
 
 
-def deploy(config, branch=None, templates_only=False):
+def deploy(config, branch=None, modules=None, templates_only=False):
     
     branch_vars = None
     branches_config = config.get("branches", None)
@@ -187,21 +187,39 @@ def deploy(config, branch=None, templates_only=False):
                 # this is a special case where we replace it with the branch name
                 version = branch
 
-        # finish with the actual deploy to the servers
-        update_args = ["appcfg.py", "update", "."]
+        # finish with the actual deploy(s) to the servers
+        update_args = ["appcfg.py", "update"]
         if version:
             update_args.append("--version=" + str(version))
+
+        if modules:
+            # modules specified on the command line, so only make this call
+            # note that if app.yaml is not included explicitly here it will not be updated
+            update_args.extend([module + ".yaml" for module in modules])
+        else:
+            modules = config.get("modules", None)
+            if modules:
+                # modules specified in the config, so update them
+                module_args = list(update_args)
+                module_args.extend([module + ".yaml" for module in modules])
+                # this call will not include the app config, which is why it's separate from the one below
+                call(module_args)
+
+            # update the default module, as well as indexes, cron, task queue, dispatch, etc.
+            # the directory (".") and a list of modules are mutually exclusive so this can't be done in the same call
+            update_args.append(".")
+
         call(update_args)
 
 
-def deployBranches(config, branches, templates_only=False):
+def deployBranches(config, branches, modules=None, templates_only=False):
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch, templates_only=templates_only)
+            deploy(config, branch=branch, modules=modules, templates_only=templates_only)
     else:
-        deploy(config, templates_only=templates_only)
+        deploy(config, modules=modules, templates_only=templates_only)
 
 
 def determineBranches(config, args):
@@ -269,10 +287,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=file, help="path to YAML configuration file")
     parser.add_argument("-g", "--gae", metavar="dir", help="path to Google App Engine SDK directory")
+    parser.add_argument("-m", "--modules", nargs='+', metavar="modules", help="deploy specific module(s)")
+    parser.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-b", "--branch", metavar="branch", help="deploy a single git branch")
     group.add_argument("-l", "--list", metavar="list", help="deploy a list of multiple git branches")
-    group.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
     args = parser.parse_args()
 
     if args.gae:
@@ -294,11 +313,12 @@ if __name__ == "__main__":
 
     branches = determineBranches(data, args)
 
-    deployBranches(data, branches, templates_only=args.templates)
+    deployBranches(data, branches, modules=args.modules, templates_only=args.templates)
 
-    cards = None
-    if 'trello' in data:
-        cards = notifyTrello(data['trello'], branches)
+    if not args.templates:
+        cards = None
+        if 'trello' in data:
+            cards = notifyTrello(data['trello'], branches)
 
-    if 'slack' in data:
-        notifySlack(data['slack'], branches, trello_cards=cards)
+        if 'slack' in data:
+            notifySlack(data['slack'], branches, trello_cards=cards)
