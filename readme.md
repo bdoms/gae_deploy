@@ -55,6 +55,12 @@ Please note that deploying individual modules this way bypasses updating
 the module specified by `app.yaml` if `app` is not explicitly included in this list,
 as well as skipping updating the app configuration, including the indexes, cron, task queue, and dispatch.
 
+#### Notify Third Parties
+
+Third party integrations like those described below are automatically notified when a deploy occurs.
+If you would like to skip doing an actual deployment but still trigger these notifications
+then pass in the `--notify` option (shortcut `-n`).
+
 #### Write Out Templates
 
 The `--templates` option (shortcut `-t`) writes out the template files for the current branch specified in the configuration file.

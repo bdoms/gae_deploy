@@ -288,6 +288,7 @@ if __name__ == "__main__":
     parser.add_argument("config", type=file, help="path to YAML configuration file")
     parser.add_argument("-g", "--gae", metavar="dir", help="path to Google App Engine SDK directory")
     parser.add_argument("-m", "--modules", nargs='+', metavar="modules", help="deploy specific module(s)")
+    parser.add_argument("-n", "--notify", action="store_true", help="skip deploying but notify third parties as if a deploy occurred")
     parser.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-b", "--branch", metavar="branch", help="deploy a single git branch")
@@ -313,7 +314,10 @@ if __name__ == "__main__":
 
     branches = determineBranches(data, args)
 
-    deployBranches(data, branches, modules=args.modules, templates_only=args.templates)
+    if args.notify:
+        print "Skipping deployment and notifying third parties."
+    else:
+        deployBranches(data, branches, modules=args.modules, templates_only=args.templates)
 
     if not args.templates:
         cards = None
