@@ -20,6 +20,8 @@ JSMIN_DIR = os.path.join(CURRENT_DIR, "lib", "jsmin")
 sys.path.append(JSMIN_DIR)
 from jsmin import jsmin
 
+CONFIGS = ["app", "cron", "dos", "dispatch", "index", "queue"]
+
 
 def minify(folders, symbolic=None):
     extensions = [".js", ".css"]
@@ -156,8 +158,7 @@ def writeFilesFromTemplates(branches_config, branch_vars, branch):
             writeFileFromTemplate(f["input"], f["output"], branch_vars, branch)
 
 
-def deploy(config, branch=None, modules=None, templates_only=False):
-    
+def deploy(config, branch=None, services=None, templates_only=False):
     branch_vars = None
     branches_config = config.get("branches", None)
     if branch and branches_config and "variables" in branches_config:
@@ -179,6 +180,15 @@ def deploy(config, branch=None, modules=None, templates_only=False):
         if "static_dirs" in config and len(config["static_dirs"]) > 0:
             minify(config["static_dirs"], symbolic=config.get("symbolic_paths", []))
 
+        update_args = ["gcloud", "app", "deploy"]
+
+        # see if this branch should be promoted - must explicitly promote to override default version
+        if branch_vars and "_promote" in branch_vars:
+            update_args.append("--promote")
+            print "Deploy: Version is being promoted to default."
+        else:
+            update_args.append("--no-promote")
+
         # see if a specific version is specified
         version = None
         if branch_vars and "_version" in branch_vars:
@@ -186,40 +196,41 @@ def deploy(config, branch=None, modules=None, templates_only=False):
             if version == "_branch":
                 # this is a special case where we replace it with the branch name
                 version = branch
-
-        # finish with the actual deploy(s) to the servers
-        update_args = ["appcfg.py", "update"]
-        if version:
-            update_args.append("--version=" + str(version))
-
-        if modules:
-            # modules specified on the command line, so only make this call
-            # note that if app.yaml is not included explicitly here it will not be updated
-            update_args.extend([module + ".yaml" for module in modules])
+            update_args.extend(["--version", str(version)])
         else:
-            modules = config.get("modules", None)
-            if modules:
-                # modules specified in the config, so update them
-                module_args = list(update_args)
-                module_args.extend([module + ".yaml" for module in modules])
-                # this call will not include the app config, which is why it's separate from the one below
-                call(module_args)
+            print "Deploy: Version not specified. Using default version."
 
-            # update the default module, as well as indexes, cron, task queue, dispatch, etc.
-            # the directory (".") and a list of modules are mutually exclusive so this can't be done in the same call
-            update_args.append(".")
+        project = config.get("project", None)
+        if project:
+            update_args.extend(["--project", project])
+        else:
+            print "Deploy: Project not specified. Using default project."
 
+        if not services:
+            # services not on command line, so get from the config
+            services = config.get("services", [])
+
+        update_args.extend([service + ".yaml" for service in services])
+
+        # update the default module, as well as indexes, cron, task queue, dispatch, etc.
+        # these must be included explicitly now with the change to GCS
+        for service in CONFIGS:
+            f = service + ".yaml"
+            if f not in update_args and os.path.exists(f):
+                update_args.append(f)
+
+        # finish with the actual deploy to the servers
         call(update_args)
 
 
-def deployBranches(config, branches, modules=None, templates_only=False):
+def deployBranches(config, branches, services=None, templates_only=False):
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch, modules=modules, templates_only=templates_only)
+            deploy(config, branch=branch, services=services, templates_only=templates_only)
     else:
-        deploy(config, modules=modules, templates_only=templates_only)
+        deploy(config, services=services, templates_only=templates_only)
 
 
 def determineBranches(config, args):
@@ -287,7 +298,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=file, help="path to YAML configuration file")
     parser.add_argument("-g", "--gae", metavar="dir", help="path to Google App Engine SDK directory")
-    parser.add_argument("-m", "--modules", nargs='+', metavar="modules", help="deploy specific module(s)")
+    parser.add_argument("-s", "--services", nargs='+', metavar="services", help="deploy specific service(s)")
     parser.add_argument("-n", "--notify", action="store_true", help="skip deploying but notify third parties as if a deploy occurred")
     parser.add_argument("-t", "--templates", action="store_true", help="write files from templates for the current branch")
     group = parser.add_mutually_exclusive_group()
@@ -307,6 +318,18 @@ if __name__ == "__main__":
     try:
         import yaml
     except ImportError:
+        yaml = None
+
+    if not yaml:
+        gcloud = "/usr/lib/google-cloud-sdk/lib/third_party/"
+        if os.path.exists(gcloud):
+            sys.path.append(gcloud)
+            try:
+                import yaml
+            except ImportError:
+                yaml = None
+
+    if not yaml:
         sys.exit("Error: Could not import YAML. Make sure it is installed, GAE is in the PYTHONPATH, or the supplied path is correct.")
 
     data = yaml.load(args.config)
@@ -317,7 +340,7 @@ if __name__ == "__main__":
     if args.notify:
         print "Skipping deployment and notifying third parties."
     else:
-        deployBranches(data, branches, modules=args.modules, templates_only=args.templates)
+        deployBranches(data, branches, services=args.services, templates_only=args.templates)
 
     if not args.templates:
         cards = None
