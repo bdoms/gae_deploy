@@ -196,18 +196,76 @@ a notification will only be sent when a branch in this list is deployed.
 
 ## Cache-Busting
 
-To get at the ability to cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:
+To cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:
 
 ```yaml
 default_expiration: "1000d"
 ```
 
-Then, in your templates or wherever you reference a static asset do this:
+## Template Use
+
+In your templates or wherever you reference a static asset do this:
 
 ```python
 from gae_deploy import static
-<script type="text/javascript" src="${static('/path/to/asset.js')}"></script>
+<script src="${static('/path/to/asset.js')}"></script>
 ```
 
 The static method will properly serve minified versions in production, non-minified versions in development, and can
-even handle assets it's not aware of, like images.
+even handle assets it's not aware of, like images, by appending a timestamp query parameter.
+
+### Subresource Integrity
+
+You can manually include integrity attributes like so:
+
+```python
+from gae_deploy import static, integrity
+<script src="${static('/path/to/asset.js')}" integrity="${integrity('/path/to/asset.js')}"></script>
+```
+
+The returned value is a sha512 base64-encoded hash in production and an empty string in development.
+
+This attribute will also be included automatically by either of the helper methods below.
+
+### Scripts
+
+You can generate the entire script tag, including the `src` and `integrity` attributes, via the `script` helper function.
+
+```python
+from gae_deploy import script
+script('/path/to/asset.js')
+# output
+<script src="/path/to/asset.min.js" integrity="sha512-abc123..."></script>
+```
+
+It also takes optional arguments for the additional attributes `async`, `defer`, and `crossorigin`.
+`async` and `defer` are booleans for whether to include them or not, and both default to `False`.
+`crossorigin` takes a string and passes it through as the attribute value. For example:
+
+```python
+from gae_deploy import script
+script('/path/to/asset.js', async=True, defer=False, crossorigin='anonymous')
+# output
+<script src="/path/to/asset.min.js" integrity="sha512-abc123..." async crossorigin="anonymous"></script>
+```
+
+### Stylesheets
+
+The `style` helper works just like `script` except it generates `link` elements for stylesheets.
+
+```python
+from gae_deploy import style
+style('/path/to/asset.css')
+# output
+<link href="/path/to/asset.min.css" integrity="sha512-abc123..." />
+```
+
+It also has optional arguments for the `crossorigin`, `media`, and `title` attributes.
+They each take a string and use it as the respective attribute value. For example:
+
+```python
+from gae_deploy import style
+style('/path/to/asset.css', crossorigin='anonymous', media='screen', title='Default')
+# output
+<link href="/path/to/asset.min.css" integrity="sha512-abc123..." crossorigin="anonymous" media="screen" title="Default" />
+```

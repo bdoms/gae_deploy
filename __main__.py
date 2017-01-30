@@ -1,6 +1,8 @@
 import argparse
+import base64
 import datetime
 import os
+import pprint
 import re
 import sys
 import time
@@ -27,6 +29,7 @@ def minify(folders, symbolic=None):
     extensions = [".js", ".css"]
     new_static_map = {}
     new_symbolic_map = {}
+    new_integrity_map = {}
     cwd = os.getcwd()
 
     symbolic_paths = {}
@@ -79,6 +82,7 @@ def minify(folders, symbolic=None):
                     # get relative filenames for use in URLs
                     rel_min_filename = prefix + "/" + os.path.relpath(min_filename, relative_path).replace(os.sep, "/")
 
+                    minified = None
                     if not os.path.exists(min_filename):
                         f = open(filename)
                         data = f.read()
@@ -104,27 +108,24 @@ def minify(folders, symbolic=None):
                     # add to the dict to record this, but first we need these to be relative
                     new_static_map[rel_filename] = rel_min_filename
 
+                    # calculate integrity and record it
+                    if minified is None:
+                        min_file = open(min_filename)
+                        minified = min_file.read()
+                        min_file.close()
+
+                    integrity = base64.b64encode(hashlib.sha512(minified).digest())
+                    new_integrity_map[rel_filename] = "sha512-" + integrity
+
     # generate a file with a dictionary of all the original file names to their new minified counterparts
     # make a timestamp for properly caching static assets we can't find here (images, etc.)
     f = open(os.path.join(CURRENT_DIR, STATIC_FILE), "w")
+
     f.write("TIMESTAMP = '" + str(int(time.time())) + "'\n")
-    f.write("STATIC_MAP = {\n")
-    last = len(new_static_map) - 1
-    for i, key in enumerate(new_static_map):
-        f.write("'" + key + "': '" + new_static_map[key] + "'")
-        if i != last:
-            f.write(",")
-        f.write("\n")
-    f.write("}\n")
-    f.write("SYMBOLIC_MAP = {\n")
-    if new_symbolic_map:
-        last = len(new_symbolic_map) - 1
-        for i, key in enumerate(new_symbolic_map):
-            f.write("'" + key + "': '" + new_symbolic_map[key] + "'")
-            if i != last:
-                f.write(",")
-            f.write("\n")
-    f.write("}\n")
+    f.write("STATIC_MAP = " + pprint.pformat(new_static_map, width=1))
+    f.write("SYMBOLIC_MAP = " + pprint.pformat(new_symbolic_map, width=1))
+    f.write("INTEGRITY_MAP = " + pprint.pformat(new_integrity_map, width=1))
+
     f.close()
 
 
