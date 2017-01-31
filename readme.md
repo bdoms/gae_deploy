@@ -39,20 +39,20 @@ Lists are defined in the configuration file. Each list is simply a list of branc
 Branches will be deployed in the order they are listed.
 This option and the `--branch` option above are mutually exclusive.
 
-#### Modules
+#### Services
 
-The `--modules` option (shortcut `-m`) specifies a list of modules to deploy.
-This overrides the `modules` configuration option described below,
-allowing for deploying a single module or a subset instead of all modules at once.
-The format is a space-separated list of the extensionless names of the module configuration files.
-For example, for modules configured in `module1.yaml` and `module2.yaml` the option would be:
+The `--services` option (shortcut `-s`) specifies a list of services to deploy.
+This overrides the `services` configuration option described below,
+allowing for deploying a single service or a subset instead of all services at once.
+The format is a space-separated list of the extensionless names of the service configuration files.
+For example, for services configured in `service1.yaml` and `service2.yaml` the option would be:
 
 ```bash
--m module1 module2
+-s service1 service2
 ```
 
-Please note that deploying individual modules this way bypasses updating
-the module specified by `app.yaml` if `app` is not explicitly included in this list,
+Please note that deploying individual services this way bypasses updating
+the service specified by `app.yaml` if `app` is not explicitly included in this list,
 as well as skipping updating the app configuration, including the indexes, cron, task queue, and dispatch.
 
 #### Notify Third Parties
@@ -150,15 +150,16 @@ symbolic_paths:
 The file `development.css` could still be referenced in templates like `${static('local/css/development.css')}`
 but the final output would be `cdn/css/production.css`.
 
-#### Modules
+#### Services
 
-If no modules are included in the configuration then `app.yaml` and the module specified there will be deployed like normal.
-However, if your app has multiple modules then list them here and they will all be deployed at once.
-Each entry is the name of the module's configuration file without the extension (e.g. `module.yaml` would be `module`).
-You should **not** include `app` for `app.yaml` here because it will automatically be included.
-This is to ensure that the indexes, cron, task queue, and dispatch are all updated during the deploy.
+If no services are included in the configuration then `app.yaml` and the service specified there will be deployed like normal.
+However, if your app has multiple services then list them here and they will all be deployed at once.
+Each entry is the name of the service's configuration file without the extension (e.g. `service.yaml` would be `service`).
+You should **not** include `app` for `app.yaml` here or any of the other protected config files because they will automatically be included.
+Currently this includes `app`, `cron`, `dos`, `dispatch`, `index`, and `queue`.
+This is to ensure that they are all updated during the deploy.
 
-This configuration can be overridden by the `--modules` command line argument described above.
+This configuration can be overridden by the `--services` command line argument described above.
 
 #### Trello Integration
 

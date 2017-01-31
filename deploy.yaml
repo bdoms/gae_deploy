@@ -1,3 +1,5 @@
+project: your-app-id
+
 branches:
   default: master
   files:
@@ -5,7 +7,8 @@ branches:
     output: robots.txt
   variables:
     master:
-      _version: 1
+      _promote: true
+      #_version: ""
       robots: 'Allow: /'
     staging:
       _version: _branch
@@ -32,9 +35,9 @@ symbolic_paths:
 - path: dev.js
   link: production.js
 
-modules:
-- module1
-- module2
+services:
+- service1
+- service2
 
 trello:
   api_key: 'API_KEY'
