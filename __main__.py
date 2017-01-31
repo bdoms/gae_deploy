@@ -1,6 +1,7 @@
 import argparse
 import base64
 import datetime
+import hashlib
 import os
 import pprint
 import re
@@ -109,6 +110,7 @@ def minify(folders, symbolic=None):
                     new_static_map[rel_filename] = rel_min_filename
 
                     # calculate integrity and record it
+                    # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
                     if minified is None:
                         min_file = open(min_filename)
                         minified = min_file.read()
@@ -122,9 +124,9 @@ def minify(folders, symbolic=None):
     f = open(os.path.join(CURRENT_DIR, STATIC_FILE), "w")
 
     f.write("TIMESTAMP = '" + str(int(time.time())) + "'\n")
-    f.write("STATIC_MAP = " + pprint.pformat(new_static_map, width=1))
-    f.write("SYMBOLIC_MAP = " + pprint.pformat(new_symbolic_map, width=1))
-    f.write("INTEGRITY_MAP = " + pprint.pformat(new_integrity_map, width=1))
+    f.write("STATIC_MAP = " + pprint.pformat(new_static_map, width=1) + "\n")
+    f.write("SYMBOLIC_MAP = " + pprint.pformat(new_symbolic_map, width=1) + "\n")
+    f.write("INTEGRITY_MAP = " + pprint.pformat(new_integrity_map, width=1) + "\n")
 
     f.close()
 
