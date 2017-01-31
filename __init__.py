@@ -5,7 +5,7 @@ try:
     from static_map import TIMESTAMP, STATIC_MAP, SYMBOLIC_MAP, INTEGRITY_MAP
 except ImportError:
     TIMESTAMP = str(int(time.time()))
-    STATIC_MAP = SYMBOLIC_MAP = {}
+    STATIC_MAP = SYMBOLIC_MAP = INTEGRITY_MAP = {}
 
 DEBUG = os.environ.get('SERVER_SOFTWARE', '').startswith('Development')
 STATIC_FILE = "static_map.py"
@@ -33,7 +33,7 @@ def integrity(url):
 
     # look up in production
     if url in INTEGRITY_MAP:
-        url = INTEGRITY_MAP[url]
+        return INTEGRITY_MAP[url]
 
     # workable fallback
     return ""
