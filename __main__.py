@@ -273,6 +273,13 @@ def notifyTrello(config, branches):
 
 
 def notifySlack(config, branches, trello_cards=None):
+    # allow for dynamic python expressions here so variables can be pulled from somewhere else
+    for key in config:
+        try:
+            config[key] = eval(config[key])
+        except:
+            pass
+
     for branch in branches:
         # only talk to Slack if one of the specified branches is being pushed
         # e.g. take action on master but not on a feature branch
