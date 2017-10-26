@@ -206,6 +206,12 @@ def deploy(config, branch=None, services=None, templates_only=False):
         project = config.get("project", None)
         if project:
             update_args.extend(["--project", project])
+        elif branch_vars and "_project" in branch_vars:
+            project = branch_vars["_project"]
+            if project == "_branch":
+                # this is a special case where we replace it with the branch name
+                version = branch
+            update_args.extend(["--project", project])
         else:
             print "Deploy: Project not specified. Using default project."
 

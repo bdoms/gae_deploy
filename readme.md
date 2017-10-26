@@ -96,10 +96,12 @@ Output files are overwritten without warning.
 The `variables` option contains a list of branches, each with a list of its own variables to swap out in the template files.
 Variables take the form of `${variable_name}` in a template file.
 
-There are a few special cases for variables. The first is if a variable is named `_version` then its value will be the app version when that branch is deployed. This overwrites any version specified in the app.yaml file.
+There are a few special cases for variables. The first is if a variable is named `_version` then its value will be the app version when that branch is deployed. This overwrites any version specified in yaml files.
 
-The second special case is if a variable's value is `_branch` then the branch name will be used.
-This can be used in combination with the `_version` option on a `default` branch to make it so that a branch without a specific version (or one configured) will use its name as its version.
+The second special case is if a variable is named `_project` then its value will be used as the project ID when that branch is deployed. This overwrites any project ID specified in yaml files.
+
+Another is if a variable's value is `_branch` then the branch name will be used.
+This can be used in combination with the `_version` or `_project` options to make it so that a branch without a specific project or version will use the branch name for that value.
 
 Finally, if a variable named `_promote` is in a branch's section then the deployed version will be promoted.
 This passes the `--promote` flag, making it the default version, overriding anything there previously.
