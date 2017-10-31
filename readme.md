@@ -197,6 +197,9 @@ To get a URL to use, setup [an incoming webhook](https://my.slack.com/services/n
 The `branches` argument works the same as the Trello integration:
 a notification will only be sent when a branch in this list is deployed.
 
+The `names` argument is an optional a mapping of branches to their display names,
+which will be used when announcing the release.
+
 ## Cache-Busting
 
 To cache-buste, first make sure that your `app.yaml` file contains a very long expiration, such as:

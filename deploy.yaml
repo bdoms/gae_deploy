@@ -52,3 +52,5 @@ slack:
   url: 'https://hooks.slack.com/services/...'
   branches:
   - master
+  names:
+    master: 'Production'

@@ -286,13 +286,19 @@ def notifySlack(config, branches, trello_cards=None):
         except:
             pass
 
+    branch_names = config.get('names', {})
+
     for branch in branches:
         # only talk to Slack if one of the specified branches is being pushed
         # e.g. take action on master but not on a feature branch
         if branch in config['branches']:
-            client = slack.Slack(config['url'])
             username = git.currentUser()
-            text = 'New release deployed by ' + username
+            branch_name = branch_names.get(branch)
+            text = 'New release'
+            if branch_name:
+                text += ' of ' + branch_name
+            text += ' deployed by ' + username
+
             attachments = []
             if trello_cards:
                 text += ':'
@@ -306,6 +312,8 @@ def notifySlack(config, branches, trello_cards=None):
                             attachment['color'] = trello.COLORS.get(label['color'], '')
                             break
                     attachments.append(attachment)
+
+            client = slack.Slack(config['url'])
             client.postMessage(text, attachments=attachments)
 
 
