@@ -188,7 +188,7 @@ def deploy(config, branch=None, services=None, templates_only=False):
         # see if this branch should be promoted - must explicitly promote to override default version
         if branch_vars and "_promote" in branch_vars:
             update_args.append("--promote")
-            print "Deploy: Version is being promoted to default."
+            print("Deploy: Version is being promoted to default.")
         else:
             update_args.append("--no-promote")
 
@@ -201,7 +201,7 @@ def deploy(config, branch=None, services=None, templates_only=False):
                 version = branch
             update_args.extend(["--version", str(version)])
         else:
-            print "Deploy: Version not specified. Using default version."
+            print("Deploy: Version not specified. Using default version.")
 
         project = config.get("project", None)
         if project:
@@ -213,7 +213,7 @@ def deploy(config, branch=None, services=None, templates_only=False):
                 version = branch
             update_args.extend(["--project", project])
         else:
-            print "Deploy: Project not specified. Using default project."
+            print("Deploy: Project not specified. Using default project.")
 
         if not services:
             # services not on command line, so get from the config
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     branches = determineBranches(data, args)
 
     if args.notify:
-        print "Skipping deployment and notifying third parties."
+        print("Skipping deployment and notifying third parties.")
     else:
         deployBranches(data, branches, services=args.services, templates_only=args.templates)
 
