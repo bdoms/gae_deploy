@@ -320,7 +320,7 @@ def notifySlack(config, branches, trello_cards=None):
 if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", type=file, help="path to YAML configuration file")
+    parser.add_argument("config", help="path to YAML configuration file")
     parser.add_argument("-g", "--gae", metavar="dir", help="path to Google App Engine SDK directory")
     parser.add_argument("-s", "--services", nargs='+', metavar="services", help="deploy specific service(s)")
     parser.add_argument("-n", "--notify", action="store_true", help="skip deploying but notify third parties as if a deploy occurred")
@@ -330,34 +330,35 @@ if __name__ == "__main__":
     group.add_argument("-l", "--list", metavar="list", help="deploy a list of multiple git branches")
     args = parser.parse_args()
 
-    if args.gae:
-        sys.path.append(args.gae)
-    
-    try:
-        import dev_appserver
-        dev_appserver.fix_sys_path()
-    except ImportError:
-        pass
-
+    # check installed first
     try:
         import yaml
     except ImportError:
         yaml = None
 
     if not yaml:
-        gcloud = "/usr/lib/google-cloud-sdk/lib/third_party/"
-        if os.path.exists(gcloud):
-            sys.path.append(gcloud)
-            try:
-                import yaml
-            except ImportError:
-                yaml = None
+        # add GAE path if it exists
+        if args.gae:
+            sys.path.append(args.gae)
+
+        # add third party libraries to the path, including YAML
+        try:
+            import dev_appserver
+            dev_appserver.fix_sys_path()
+        except ImportError:
+            pass
+
+        # try again
+        try:
+            import yaml
+        except ImportError:
+            yaml = None
 
     if not yaml:
         sys.exit("Error: Could not import YAML. Make sure it is installed, GAE is in the PYTHONPATH, or the supplied path is correct.")
 
-    data = yaml.load(args.config)
-    args.config.close()
+    with open(args.config) as f:
+        data = yaml.load(f)
 
     branches = determineBranches(data, args)
 
