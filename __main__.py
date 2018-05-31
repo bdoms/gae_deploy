@@ -116,8 +116,8 @@ def minify(folders, symbolic=None):
                         minified = min_file.read()
                         min_file.close()
 
-                    integrity = base64.b64encode(hashlib.sha512(minified.encode('utf-8')).digest())
-                    new_integrity_map[rel_filename] = "sha512-" + integrity
+                    integrity = base64.b64encode(hashlib.sha512(minified.encode("utf-8")).digest())
+                    new_integrity_map[rel_filename] = "sha512-" + integrity.decode("utf-8")
 
     # generate a file with a dictionary of all the original file names to their new minified counterparts
     # make a timestamp for properly caching static assets we can't find here (images, etc.)
