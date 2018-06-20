@@ -256,13 +256,23 @@ def determineBranches(config, args):
     return branches
 
 
-def notifyTrello(config, branches):
+def evalConfig(config):
     # allow for dynamic python expressions here so variables can be pulled from somewhere else
     for key in config:
         try:
             config[key] = eval(config[key])
         except:
             pass
+
+        # support nesting
+        if isinstance(config[key], dict):
+            config[key] = evalConfig(config[key])
+
+    return config
+
+
+def notifyTrello(config, branches):
+    config = evalConfig(config)
 
     notify_branches = config.get('notify_branches', [])
 
@@ -284,12 +294,7 @@ def notifyTrello(config, branches):
 
 
 def notifySlack(config, branches, trello_cards=None):
-    # allow for dynamic python expressions here so variables can be pulled from somewhere else
-    for key in config:
-        try:
-            config[key] = eval(config[key])
-        except:
-            pass
+    config = evalConfig(config)
 
     branch_names = config.get('names', {})
     branch_urls = config.get('urls', {})
