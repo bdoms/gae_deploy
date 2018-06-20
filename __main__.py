@@ -153,7 +153,7 @@ def writeFileFromTemplate(infile, outfile, variables, branch):
 
 
 def writeFilesFromTemplates(branches_config, branch_vars, branch):
-    
+
     if "files" in branches_config:
         files = branches_config["files"]
 
@@ -263,7 +263,7 @@ def notifyTrello(config, branches):
             config[key] = eval(config[key])
         except:
             pass
-    
+
     moved_cards = []
     for branch in branches:
         # only talk to Trello if one of the specified branches is being pushed
@@ -287,6 +287,8 @@ def notifySlack(config, branches, trello_cards=None):
             pass
 
     branch_names = config.get('names', {})
+    branch_urls = config.get('urls', {})
+    default_url = config.get('url')
 
     for branch in branches:
         # only talk to Slack if one of the specified branches is being pushed
@@ -313,8 +315,12 @@ def notifySlack(config, branches, trello_cards=None):
                             break
                     attachments.append(attachment)
 
-            client = slack.Slack(config['url'])
-            client.postMessage(text, attachments=attachments)
+            branch_url = branch_urls.get(branch, default_url)
+            if branch_url:
+                client = slack.Slack(branch_url)
+                client.postMessage(text, attachments=attachments)
+            else:
+                print('Deploy: Could not find valid Slack URL for branch "' + branch + '"')
 
 
 if __name__ == "__main__":
