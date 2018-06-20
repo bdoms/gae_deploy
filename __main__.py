@@ -275,13 +275,13 @@ def notifyTrello(config, branches):
     config = evalConfig(config)
 
     notify_branches = config.get('notify_branches', [])
+    client = trello.Trello(config['api_key'], config['oauth_token'], config['board_id'])
 
     moved_cards = []
     for branch in branches:
         # only talk to Trello if one of the specified branches is being pushed
         # e.g. take action on master but not on a feature branch
         if branch in config['branches']:
-            client = trello.Trello(config['api_key'], config['oauth_token'], config['board_id'])
             now = datetime.datetime.now()
             release_name = now.strftime(config['release_name'])
             release_list = client.createList(release_name, config['list_id'])
