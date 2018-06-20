@@ -264,6 +264,8 @@ def notifyTrello(config, branches):
         except:
             pass
 
+    notify_branches = config.get('notify_branches', [])
+
     moved_cards = []
     for branch in branches:
         # only talk to Trello if one of the specified branches is being pushed
@@ -274,6 +276,9 @@ def notifyTrello(config, branches):
             release_name = now.strftime(config['release_name'])
             release_list = client.createList(release_name, config['list_id'])
             moved_cards = client.moveCards(config['list_id'], release_list['id'])
+        elif branch in notify_branches:
+            # get the cards but don't move them
+            moved_cards = client.getCards(config['list_id'])
 
     return moved_cards
 
