@@ -229,18 +229,21 @@ def deploy(config, branch=None, services=None, templates_only=False):
                 update_args.append(f)
 
         # finish with the actual deploy to the servers
-        call(update_args)
+        return call(update_args)
 
 
 def deployBranches(config, branches, services=None, templates_only=False):
+    code = 1 # 0 is success, so by default assume the deploy didn't succeed
     if branches:
         for branch in branches:
             if git.currentBranch() != branch:
                 git.checkout(branch)
-            deploy(config, branch=branch, services=services, templates_only=templates_only)
+            code = deploy(config, branch=branch, services=services, templates_only=templates_only)
     else:
-        deploy(config, services=services, templates_only=templates_only)
+        code = deploy(config, services=services, templates_only=templates_only)
 
+    # note that this only returns the most recent
+    return code
 
 def determineBranches(config, args):
     branches = []
@@ -378,15 +381,19 @@ if __name__ == "__main__":
 
     branches = determineBranches(data, args)
 
+    code = 0
     if args.notify:
         print("Skipping deployment and notifying third parties.")
     else:
-        deployBranches(data, branches, services=args.services, templates_only=args.templates)
+        code = deployBranches(data, branches, services=args.services, templates_only=args.templates)
 
     if not args.templates:
-        cards = None
-        if 'trello' in data:
-            cards = notifyTrello(data['trello'], branches)
+        if code:
+            print("Deploy did not report success. Skipping notifications.")
+        else:
+            cards = None
+            if 'trello' in data:
+                cards = notifyTrello(data['trello'], branches)
 
-        if 'slack' in data:
-            notifySlack(data['slack'], branches, trello_cards=cards)
+            if 'slack' in data:
+                notifySlack(data['slack'], branches, trello_cards=cards)
