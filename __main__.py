@@ -287,6 +287,7 @@ def notifyTrello(config, branches):
         if branch in config['branches']:
             now = datetime.datetime.now()
             release_name = now.strftime(config['release_name'])
+            print('Deploy: Moving Trello cards to list "' + release_name + '"')
             release_list = client.createList(release_name, config['list_id'])
             moved_cards = client.moveCards(config['list_id'], release_list['id'])
         elif branch in notify_branches:
@@ -331,6 +332,7 @@ def notifySlack(config, branches, trello_cards=None):
             branch_url = branch_urls.get(branch, default_url)
             if branch_url:
                 client = slack.Slack(branch_url)
+                print('Deploy: Posting to Slack channel for "' + branch_name + '"')
                 client.postMessage(text, attachments=attachments)
             else:
                 print('Deploy: Could not find valid Slack URL for branch "' + branch + '"')
@@ -383,13 +385,13 @@ if __name__ == "__main__":
 
     code = 0
     if args.notify:
-        print("Skipping deployment and notifying third parties.")
+        print("Deploy: Skipping deployment. Notifying third parties.")
     else:
         code = deployBranches(data, branches, services=args.services, templates_only=args.templates)
 
     if not args.templates:
         if code:
-            print("Deploy did not report success. Skipping notifications.")
+            print("Deploy: Deployment did not report success. Skipping notifications.")
         else:
             cards = None
             if 'trello' in data:
