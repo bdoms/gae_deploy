@@ -72,6 +72,10 @@ The configuration file contains information about how the deploy should be perfo
 
 There is an example provided, `deploy.yaml`, which you can use to get started by copying and pasting into your application directory and then modifying to suit your needs.
 
+#### Project
+
+The `project` directive indicates which project should be updated. If a project is not set then your system's default set by `gcloud init` is used.
+
 #### Git Branches
 
 The `branches` directive describes how git branches should be deployed.
@@ -103,9 +107,12 @@ The second special case is if a variable is named `_project` then its value will
 Another is if a variable's value is `_branch` then the branch name will be used.
 This can be used in combination with the `_version` or `_project` options to make it so that a branch without a specific project or version will use the branch name for that value.
 
-Finally, if a variable named `_promote` is in a branch's section then the deployed version will be promoted.
+If a variable named `_promote` is in a branch's section then the deployed version will be promoted.
 This passes the `--promote` flag, making it the default version, overriding anything there previously.
 Without it, branches are deployed with the `--no-promote` flag, so you have to use their specific version URL.
+
+A branch can also specify `_services` as a list that will override which services are deployed.
+See the note on services below for more information.
 
 #### Static Directories
 

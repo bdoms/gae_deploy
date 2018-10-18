@@ -195,11 +195,11 @@ def deploy(config, branch=None, services=None, templates_only=False):
         # see if a specific version is specified
         version = None
         if branch_vars and "_version" in branch_vars:
-            version = branch_vars["_version"]
+            version = str(branch_vars["_version"])
             if version == "_branch":
                 # this is a special case where we replace it with the branch name
                 version = branch
-            update_args.extend(["--version", str(version)])
+            update_args.extend(["--version", version])
         else:
             print("Deploy: Version not specified. Using default version.")
 
@@ -210,14 +210,17 @@ def deploy(config, branch=None, services=None, templates_only=False):
             project = branch_vars["_project"]
             if project == "_branch":
                 # this is a special case where we replace it with the branch name
-                version = branch
+                project = branch
             update_args.extend(["--project", project])
         else:
             print("Deploy: Project not specified. Using default project.")
 
         if not services:
             # services not on command line, so get from the config
-            services = config.get("services", [])
+            if branch_vars and "_services" in branch_vars:
+                services = branch_vars["_services"]
+            else:
+                services = config.get("services", [])
 
         update_args.extend([service + ".yaml" for service in services])
 
