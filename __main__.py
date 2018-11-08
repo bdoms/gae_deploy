@@ -203,14 +203,15 @@ def deploy(config, branch=None, services=None, templates_only=False):
         else:
             print("Deploy: Version not specified. Using default version.")
 
+        # branch check should come first so it can override
         project = config.get("project", None)
-        if project:
-            update_args.extend(["--project", project])
-        elif branch_vars and "_project" in branch_vars:
+        if branch_vars and branch_vars.get("_project"):
             project = branch_vars["_project"]
             if project == "_branch":
                 # this is a special case where we replace it with the branch name
                 project = branch
+            update_args.extend(["--project", project])
+        elif project:
             update_args.extend(["--project", project])
         else:
             print("Deploy: Project not specified. Using default project.")
