@@ -38,7 +38,7 @@ def integrity(url):
     # workable fallback
     return ""
 
-def script(url, async=False, defer=False, crossorigin=None):
+def script(url, asyncattr=False, defer=False, crossorigin=None):
     src = static(url)
     sri = integrity(url)
     s = '<script src="' + src + '" '
@@ -46,7 +46,7 @@ def script(url, async=False, defer=False, crossorigin=None):
     if sri:
         s += 'integrity="' + sri + '" '
 
-    if async:
+    if asyncattr:
         s += 'async '
 
     if defer:

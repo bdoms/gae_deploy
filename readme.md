@@ -251,13 +251,13 @@ script('/path/to/asset.js')
 <script src="/path/to/asset.min.js" integrity="sha512-abc123..."></script>
 ```
 
-It also takes optional arguments for the additional attributes `async`, `defer`, and `crossorigin`.
-`async` and `defer` are booleans for whether to include them or not, and both default to `False`.
+It also takes optional arguments for the additional attributes `asyncattr`, `defer`, and `crossorigin`.
+`asyncattr` and `defer` are booleans for whether to include them or not, and both default to `False`.
 `crossorigin` takes a string and passes it through as the attribute value. For example:
 
 ```python
 from gae_deploy import script
-script('/path/to/asset.js', async=True, defer=False, crossorigin='anonymous')
+script('/path/to/asset.js', asyncattr=True, defer=False, crossorigin='anonymous')
 # output
 <script src="/path/to/asset.min.js" integrity="sha512-abc123..." async crossorigin="anonymous"></script>
 ```
